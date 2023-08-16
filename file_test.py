@@ -3,7 +3,7 @@ from google.cloud import vision
 import tkinter as tk
 from tkinter import filedialog
 import pymongo
-from pymongo import MongoClient
+from pymongo import MongoClient, UpdateOne
 import proto
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "credentials.json"
@@ -57,10 +57,12 @@ def addToTokenization(text):
     return filtered_tokens
 
 def addToSearchIndex(tokens, file_id):
+    bulk = []
     for token in tokens:
-        search.update_one({"word": token}, {"$addToSet": {"documents": {
+        op = UpdateOne({"word": token}, {"$addToSet": {"documents": {
                   "$each": [file_id]}}}, upsert=True)
-    return
+        bulk.append(op)
+    search.bulk_write(bulk)
 
 def addToStorage(file_name, content):
     f = open("storage/"+file_name, "wb")
@@ -79,6 +81,6 @@ def searchIndex(word="good"):
         result.append(item)
     print(result)
 
-searchIndex()
+# searchIndex()
 
-# addToDatabase()
+addToDatabase()
